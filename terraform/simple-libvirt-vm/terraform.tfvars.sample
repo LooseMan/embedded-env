@@ -1,0 +1,11 @@
+libvirt_uri = <your_libvirt_uri>
+
+vm_name = "nested-guest-vm-2"
+
+host_only_network_name    = "host-only-bridge-2"
+host_only_network_gateway = "192.168.150.1"
+
+storage_pool_name      = "default"
+overlay_volume_name    = "overlay.qcow2"
+overlay_capacity_bytes = 68719476736 # 64 GiB
+base_image_name        = "centos-5.11.qcow2"
