@@ -1,0 +1,9 @@
+---
+# RHEL/CentOS 5 系ゲストの Vagrant 既定認証情報
+ansible_user:		<your_user>
+ansible_password:	<your_password>
+
+# 踏み台ホストへの SSH 接続に使う、Ansible 実行端末上の秘密鍵
+bastion_ssh_private_key_path:	<your_ssh_private_key_path>
+bastion_ssh_user: 				<your_ssh_user>
+bastion_host: 					<your_host>

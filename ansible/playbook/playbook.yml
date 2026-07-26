@@ -1,0 +1,43 @@
+---
+- name: サーバー一気通貫プロビジョニング
+  hosts: all
+  gather_facts: no # ポートが開く前はファクト収集できないので必ず no
+
+  tasks:
+    # RHEL/CentOS 5 の標準 Python 2.4 では通常モジュールを実行できないため、
+    # Python を使わない raw で SSH 接続だけを確認する。
+    - name: SSH 接続を確認する（Python 不要）
+      ansible.builtin.raw: /bin/true
+      changed_when: false
+      check_mode: no
+
+    # main.tf で eth1 が有効化されている場合だけ、ホストオンリー NIC を設定する。
+    # 仮想HWの eth1 が down 状態で追加されるので、ifcfg-eth1 を作成して up する。
+    - name: eth1 の有無を確認する
+      ansible.builtin.raw: test -d /sys/class/net/eth1
+      register: eth1_exists
+      changed_when: false
+      failed_when: false
+      check_mode: no
+
+    - name: eth1（ホストオンリー）を設定する
+      block:
+        - name: eth1 の設定ファイルを配置する
+          ansible.builtin.raw: |
+            printf '%s\n' \
+              'DEVICE=eth1' \
+              'BOOTPROTO=static' \
+              'ONBOOT=yes' \
+              'IPADDR=192.168.150.10' \
+              'NETMASK=255.255.255.0' \
+              'TYPE=Ethernet' \
+              'USERCTL=no' \
+              'PEERDNS=no' > /etc/sysconfig/network-scripts/ifcfg-eth1
+          become: yes
+
+        - name: eth1 のインターフェースを再起動して設定を反映
+          ansible.builtin.raw: /sbin/ifdown eth1 || true && /sbin/ifup eth1
+          become: yes
+      when:
+        - eth1_exists.rc == 0
+        - not ansible_check_mode
