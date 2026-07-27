@@ -1,8 +1,8 @@
 #!/bin/bash
 
-IMAGE=alma9-ansible-env
+IMAGE=verify
 
-podman run --rm -it \
+docker run --rm -it \
     --cap-add=SYS_PTRACE \
     --security-opt seccomp=unconfined \
     -v "$(pwd)":/workspace:Z \

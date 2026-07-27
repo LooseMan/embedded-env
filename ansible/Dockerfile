@@ -11,6 +11,8 @@ FROM almalinux:9 AS base
 
 # パッケージインストール（ドキュメント・キャッシュを除外）
 RUN dnf -y install --nodocs \
+        python3 \
+        python3-pip \
         crypto-policies-scripts && \
     dnf clean all && \
     rm -rf /var/cache/dnf
@@ -49,11 +51,8 @@ CMD ["/bin/bash"]
 # ============================================================
 FROM ansible AS verify
 
-# パッケージインストール（ドキュメント・キャッシュを除外）
-RUN dnf -y install epel-release && \
-    dnf -y install --nodocs \
-        python3-pytest && \
-    dnf clean all && \
-    rm -rf /var/cache/dnf
+RUN pip3 install --no-cache-dir \
+        pytest \
+        pytest-testinfra
 
 CMD ["pytest"]
