@@ -28,6 +28,5 @@ all:
           -o HostKeyAlgorithms=+ssh-rsa
           -o PubkeyAcceptedAlgorithms=+ssh-rsa
           -o StrictHostKeyChecking=no
-          -o ProxyCommand="ssh -W %h:%p -l {{ bastion_ssh_user }} -i {{ bastion_ssh_private_key_path }} {{ bastion_host }}"
   YAML
 }
