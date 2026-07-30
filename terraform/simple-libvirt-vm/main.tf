@@ -32,6 +32,8 @@ provider "libvirt" {
 # 孫VM用のネットワーク（ホストオンリー）
 resource "libvirt_network" "host_only" {
   name = var.host_only_network_name
+  # ホストOS起動時に有効化する
+  autostart = true
 
   dns = {
     enable = "no"
