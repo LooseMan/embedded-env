@@ -22,14 +22,27 @@
 
     - name: eth1（ホストオンリー）を設定する
       block:
+        - name: eth1 の設定メタデータを配置する
+          ansible.builtin.raw: |
+            cat > /etc/ansible-test-metadata.json <<'JSON'
+            {
+              "eth1": {
+                "device": "{{ eth1_device }}",
+                "ip_address": "{{ eth1_ip_address }}",
+                "prefix_length": {{ eth1_prefix_length }}
+              }
+            }
+            JSON
+          become: yes
+
         - name: eth1 の設定ファイルを配置する
           ansible.builtin.raw: |
             printf '%s\n' \
-              'DEVICE=eth1' \
+              'DEVICE={{ eth1_device }}' \
               'BOOTPROTO=static' \
               'ONBOOT=yes' \
-              'IPADDR=192.168.150.10' \
-              'NETMASK=255.255.255.0' \
+              'IPADDR={{ eth1_ip_address }}' \
+              'NETMASK={{ eth1_netmask }}' \
               'TYPE=Ethernet' \
               'USERCTL=no' \
               'PEERDNS=no' > /etc/sysconfig/network-scripts/ifcfg-eth1
