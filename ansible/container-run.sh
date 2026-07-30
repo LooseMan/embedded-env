@@ -2,7 +2,7 @@
 
 IMAGE=verify
 
-docker run --rm -it \
+podman run --rm -it \
     --cap-add=SYS_PTRACE \
     --security-opt seccomp=unconfined \
     -v "$(pwd)":/workspace:Z \
