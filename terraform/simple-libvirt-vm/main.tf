@@ -66,6 +66,13 @@ resource "libvirt_volume" "overlay" {
       type = "qcow2"
     }
   }
+
+  # libvirt のストレージボリュームは更新できない。
+  # 作成後の差分は管理対象外とする。
+  # (更新時は削除→作成を実施すること)
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 # cloud-init は使わず、eth0 の libvirt 既定 NAT アダプタ経由で SSH 接続して eth1 を設定する。
