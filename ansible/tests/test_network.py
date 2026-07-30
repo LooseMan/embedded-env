@@ -16,6 +16,11 @@ def test_ssh_connection(host):
     assert host.run("/bin/true").rc == 0
 
 
+def test_hostname_is_shared_from_ansible(host):
+    metadata = _shared_metadata(host)
+    assert host.run("hostname").stdout.strip() == metadata["hostname"]
+
+
 @pytest.fixture
 def eth1(host):
     """Skip eth1 assertions when the optional host-only NIC is absent."""

@@ -20,19 +20,20 @@
       failed_when: false
       check_mode: no
 
+    - name: ホスト名を設定する
+      ansible.builtin.raw: |
+        hostname {{ inventory_hostname }}
+      become: yes
+
     - name: eth1（ホストオンリー）を設定する
       block:
         - name: eth1 の設定メタデータを配置する
           ansible.builtin.raw: |
-            cat > /etc/ansible-test-metadata.json <<'JSON'
-            {
-              "eth1": {
-                "device": "{{ eth1_device }}",
-                "ip_address": "{{ eth1_ip_address }}",
-                "prefix_length": {{ eth1_prefix_length }}
-              }
-            }
-            JSON
+            printf '{"hostname":"%s","eth1":{"device":"%s","ip_address":"%s","prefix_length":%s}}\n' \
+              '{{ inventory_hostname }}' \
+              '{{ eth1_device }}' \
+              '{{ eth1_ip_address }}' \
+              '{{ eth1_prefix_length }}' > /etc/ansible-test-metadata.json
           become: yes
 
         - name: eth1 の設定ファイルを配置する
