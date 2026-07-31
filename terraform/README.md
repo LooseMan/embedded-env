@@ -1,177 +1,73 @@
-# Terraform インストールガイド（macOS 15）
+# Terraform コンテナ環境
 
-## 概要
+このディレクトリの Dockerfile は Terraform 実行専用です。Terraform、リモート libvirt への接続に必要なライブラリ、SSH クライアント、および中央カタログで固定した Provider を含みます。Terraform プロジェクト自体はイメージに含めません。
 
-本書では、macOS 15 (Sequoia) に Terraform を導入する手順を説明します。
+このイメージは `linux/amd64`（x86_64）専用です。`dmacvicar/libvirt` Provider 0.9.8 は、Terraform 公式の `terraform providers mirror` コマンドでビルド時に取得し、展開済みの filesystem mirror として同梱します。
 
-Terraform本体のインストールは HashiCorp が推奨する Homebrew を利用します。
+## ビルド
 
-対象読者
-
-- macOS 15
-- Homebrew導入済み
-- Terraform開発環境を構築したい
-
----
-
-# 前提条件
-
-以下が導入済みであること
-
-- Homebrew
-- Apple Command Line Tools
-
-確認
+リポジトリのルートで実行します。
 
 ```bash
-brew --version
-xcode-select -p
+docker build --platform linux/amd64 -t embedded-env-terraform ./terraform
 ```
 
----
+x86_64 Linux ホストでは `--platform linux/amd64` を省略できます。Apple Silicon など別アーキテクチャのホストでは、この指定により x86_64 イメージとしてビルド・実行されます。
 
-# 1. HashiCorp Tapを追加
+バージョンを確認します。
 
 ```bash
-brew tap hashicorp/tap
+docker run --rm embedded-env-terraform terraform version
 ```
 
----
+## Terraform の実行
 
-# 2. Terraformをインストール
+構成ディレクトリを `/workspace` としてマウントして実行します。状態ファイルと `.terraform` ディレクトリはホスト側に保存されます。
 
 ```bash
-brew install hashicorp/tap/terraform
+cd terraform/simple-libvirt-vm
+docker run --rm -it \
+  -v "$PWD:/workspace" -w /workspace \
+  embedded-env-terraform terraform init
+docker run --rm -it \
+  -v "$PWD:/workspace" -w /workspace \
+  embedded-env-terraform terraform plan
 ```
 
-最新版へ更新
+## リモート libvirt への SSH 接続
+
+この構成は `qemu+ssh` でリモート libvirt に接続します。ホストで SSH agent を起動し、コンテナへソケットを渡します。
 
 ```bash
-brew upgrade terraform
+eval "$(ssh-agent)"
+ssh-add ~/.ssh/<private-key>
+
+cd terraform/simple-libvirt-vm
+docker run --rm -it \
+  -v "$PWD:/workspace" -w /workspace \
+  -v "$SSH_AUTH_SOCK:/ssh-agent" \
+  -e SSH_AUTH_SOCK=/ssh-agent \
+  embedded-env-terraform terraform apply
 ```
 
----
+初回接続時は、ホストの SSH で接続先のホスト鍵を確認しておくと安全です。
 
-# 3. 動作確認
+秘密鍵をコンテナイメージへコピーしたり、Terraform の設定ファイルに記録したりしないでください。
 
-```bash
-terraform version
-```
+## 閉域環境向け Provider ミラー
 
-例
+`terraformrc` は、同梱する `/opt/terraform/providers` の展開済み filesystem mirror だけを Provider の取得元として設定しています。`direct` を定義していないため、`terraform init` は Terraform Registry から Provider を取得しません。Terraform は各プロジェクトの `.terraform/providers` からミラー内の Provider 実体へのシンボリックリンクを作成できるため、Provider バイナリをプロジェクトごとに複製しません。
 
-```
-Terraform v1.x.x
-on darwin_arm64
-```
+`providers.tf` は、イメージに同梱する Provider の中央カタログです。Provider を追加・更新する場合は、このファイルの `required_providers` を更新してイメージを再ビルドしてください。ビルド時に `terraform providers mirror` が `/opt/terraform/providers` を生成し、Dockerfile が展開済みレイアウトへ変換します。各 Terraform プロジェクトの `required_providers` は、中央カタログに含まれる同じ Provider とバージョン制約を指定します。
 
----
+この設定は Provider の取得だけを閉域化します。モジュールのダウンロード、remote backend への接続、Terraform の更新チェックには、それぞれの設定に応じて外部ネットワーク接続が必要になる場合があります。
 
-# 4. PATH確認
+## 注意事項
 
-```bash
-which terraform
-```
+- Docker Desktop から接続先の libvirt ホストへ到達できることを事前に確認してください。
+- `terraform apply` と `terraform destroy` はリモートの libvirt リソースを変更・削除します。実行前に `terraform plan` を確認してください。
+- RHEL/CentOS 5 系など旧式 SSH の接続互換性は、必要な接続先だけに限定して SSH 設定で有効化してください。
 
-Homebrew管理下であることを確認する。
+## 参考資料
 
-Apple Silicon
-
-```
-/opt/homebrew/bin/terraform
-```
-
-Intel Mac
-
-```
-/usr/local/bin/terraform
-```
-
----
-
-# 5. 動作確認
-
-作業ディレクトリ作成
-
-```bash
-mkdir terraform-test
-cd terraform-test
-```
-
-初期化
-
-```bash
-terraform init
-```
-
-ヘルプ表示
-
-```bash
-terraform -help
-```
-
-ここまで実行できれば導入完了。
-
----
-
-# トラブルシューティング
-
-## Command Line Toolsが古い
-
-Terraformインストール時に
-
-```
-Your Command Line Tools are too outdated.
-```
-
-が表示される場合はCommand Line Toolsを更新する。
-
-```bash
-sudo rm -rf /Library/Developer/CommandLineTools
-
-xcode-select --install
-```
-
-インストール完了後に再度
-
-```bash
-brew install hashicorp/tap/terraform
-```
-
-を実行する。
-
----
-
-# Dockerコンテナでの利用について
-
-Terraformは単一バイナリで提供されており、依存ライブラリも少ないため、開発環境をコンテナ化するメリットは限定的です。HashiCorpも通常は各OSへ直接インストールする方法を案内しています。
-
-特に、SSH経由でリモート環境を操作するProvider（libvirt Providerなど）を利用する場合、Docker Desktop上では以下のような制約が発生することがあります。
-
-- ホストのSSH鍵をコンテナへマウントする必要がある
-- Docker Desktopのネットワーク構成により、VirtualBoxのHost-Only Networkなどホスト専用ネットワークへ接続できない場合がある
-- Terraform本来とは関係のないDockerのネットワークやボリューム設定の影響を受ける
-
-そのため、TerraformはmacOSへ直接インストールして利用することを推奨します。
-
-一方で、以下のような用途ではDockerコンテナの利用が有効です。
-
-- `terraform fmt`
-- `terraform validate`
-- `tflint`
-- `tfsec`
-- `checkov`
-
-これらは静的解析やCI/CD用途であり、ターゲット環境へのSSH接続を必要としないため、コンテナ環境との相性が良好です。
-
----
-
-# 参考資料
-
-HashiCorp公式
-
-https://developer.hashicorp.com/terraform/install
-
-Homebrew
-
-https://brew.sh/
+https://docs.aws.amazon.com/prescriptive-guidance/latest/terraform-aws-provider-best-practices/structure.html
