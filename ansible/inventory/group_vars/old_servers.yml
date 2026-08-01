@@ -1,0 +1,7 @@
+---
+# 仮想の旧サーバとの通信用、SHA-1・RSAを有効化し、ホスト鍵の検証を無効化する。
+ansible_ssh_common_args: >-
+  -o KexAlgorithms=+diffie-hellman-group14-sha1
+  -o HostKeyAlgorithms=+ssh-rsa
+  -o PubkeyAcceptedAlgorithms=+ssh-rsa
+  -o StrictHostKeyChecking=no
