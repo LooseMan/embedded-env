@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE=verify
+IMAGE=terraform
 
 # docker コマンドがない場合は podman に処理を転送する関数を作る
 if ! command -v docker &> /dev/null; then
