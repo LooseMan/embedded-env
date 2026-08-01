@@ -3,11 +3,24 @@ ANSIBLE_DIR := $(CURDIR)/ansible
 INVENTORY   := $(ANSIBLE_DIR)/inventory/applied_hosts.yml
 PLAYBOOK    := $(ANSIBLE_DIR)/playbook/playbook.yml
 
-.PHONY: apply plan destroy inventory configure clean
+.PHONY: build provision inventory configure clean
 
 build:
+	$(MAKE) provision
+	$(MAKE) inventory
+	$(MAKE) configure
+
+provision:
 	cd $(TF_DIR) && terraform apply -auto-approve
-	cd $(TF_DIR) && terraform output -raw ansible_applied_hosts > $(INVENTORY)
+
+# TODO: jq を使用すべきかは再考の余地あり
+inventory:
+	cd $(TF_DIR) && terraform output -json | jq -r ' \
+	.vm_connection.value as $$vm | \
+	"---\nall:\n  children:\n    old_servers:\n      hosts:\n        \($$vm.name | gsub("-"; "_")):\n          ansible_host: \($$vm.ipv4_address)"' \
+	> $(INVENTORY)
+
+configure: inventory
 	ansible-playbook -i $(INVENTORY) $(PLAYBOOK)
 
 clean:

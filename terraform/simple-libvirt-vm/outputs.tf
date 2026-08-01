@@ -7,26 +7,10 @@ locals {
   ]))
 }
 
-output "vm_ipv4_address" {
-  description = "libvirt default ネットワークの DHCP がゲストに割り当てた IPv4 アドレス"
-  value       = local.vm_ipv4_address
-}
-
-output "ansible_applied_hosts" {
-  description = "hosts.yml へ貼り付ける定義"
-  value       = <<-YAML
----
-all:
-  children:
-    old_servers:
-      hosts:
-        ${replace(var.vm_name, "-", "_")}:
-          ansible_host: ${local.vm_ipv4_address}
-      vars:
-        ansible_ssh_common_args: >-
-          -o KexAlgorithms=+diffie-hellman-group14-sha1
-          -o HostKeyAlgorithms=+ssh-rsa
-          -o PubkeyAcceptedAlgorithms=+ssh-rsa
-          -o StrictHostKeyChecking=no
-  YAML
+output "vm_connection" {
+  description = "作成した VM の接続情報。後続工程が利用するための汎用出力。"
+  value = {
+    name         = var.vm_name
+    ipv4_address = local.vm_ipv4_address
+  }
 }
