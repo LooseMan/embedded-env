@@ -1,6 +1,6 @@
 ---
 - name: サーバー一気通貫プロビジョニング
-  hosts: all
+  hosts: old_servers
   gather_facts: no # ポートが開く前はファクト収集できないので必ず no
 
   tasks:
@@ -27,15 +27,6 @@
 
     - name: eth1（ホストオンリー）を設定する
       block:
-        - name: eth1 の設定メタデータを配置する
-          ansible.builtin.raw: |
-            printf '{"hostname":"%s","eth1":{"device":"%s","ip_address":"%s","prefix_length":%s}}\n' \
-              '{{ inventory_hostname }}' \
-              '{{ eth1_device }}' \
-              '{{ eth1_ip_address }}' \
-              '{{ eth1_prefix_length }}' > /etc/ansible-test-metadata.json
-          become: yes
-
         - name: eth1 の設定ファイルを配置する
           ansible.builtin.raw: |
             printf '%s\n' \

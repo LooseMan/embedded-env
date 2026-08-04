@@ -1,0 +1,47 @@
+---
+- name: サーバープロビジョニング検証
+  hosts: old_servers
+  gather_facts: no
+
+  tasks:
+
+    - name: SSH接続確認
+      ansible.builtin.raw: /bin/true
+      changed_when: false
+
+    - name: 現在のホスト名を取得
+      ansible.builtin.raw: hostname
+      register: hostname_result
+      changed_when: false
+    - name: ホスト名が一致することを確認
+      ansible.builtin.assert:
+        that:
+          - hostname_result.stdout | trim == inventory_hostname
+        fail_msg: >
+          hostname不一致:
+          expected={{ inventory_hostname }},
+          actual={{ hostname_result.stdout | trim }}
+
+    - name: eth1状態確認
+      ansible.builtin.raw:
+        /sbin/ifconfig eth1
+      register: eth1_status
+      changed_when: false
+    - name: eth1が有効化されていることを確認
+      ansible.builtin.assert:
+        that:
+          - eth1_ip_address in eth1_status.stdout
+        fail_msg: |
+          eth1 IP未設定:
+          {{ eth1_status.stdout }}
+
+    - name: eth1疎通確認
+      ansible.builtin.raw:
+        ping -c 1 {{ eth1_ip_address | default('127.0.0.1') }}
+      register: ping_result
+      changed_when: false
+      failed_when: false
+
+    - name: 疎通確認結果
+      ansible.builtin.debug:
+        msg: "{{ ping_result.stdout }}"
