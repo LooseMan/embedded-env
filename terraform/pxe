@@ -1,0 +1,32 @@
+# 文字コード：UTF-8, 改行コード：LF
+
+# 仮想マシン定義
+resource "libvirt_domain" "pxe_client" {
+
+  os = {
+    boot = ["network"] # ネットワークブート
+  }
+
+  devices = {
+    # ディスク定義（PXEクライアントの場合は不要）
+
+    # ネットワーク定義（interfacesリスト形式）
+    interfaces = [
+      {
+        # PXEサーバ側で配布内容を切り替え可能とするためMACアドレスを固定
+        mac = {
+          address = "aa:a1:a3:a4:a5:a6"
+        }
+        # NATではなくbridgeを使用（デフォルトのDHCPサーバとのバッティング回避のため）
+        source = {
+          bridge = {
+            bridge = "br3"
+          }
+        }
+        model = {
+          type = "e1000"
+        }
+      }
+    ]
+  }
+}
