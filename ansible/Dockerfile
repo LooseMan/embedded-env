@@ -10,15 +10,14 @@ FROM almalinux:9 AS base
 # RUN dnf -y update
 
 # パッケージインストール（ドキュメント・キャッシュを除外）
+# システム設定（旧暗号化ポリシーを有効化、Alma10以降は削除されている）
 RUN dnf -y install --nodocs \
         python3 \
         python3-pip \
         crypto-policies-scripts && \
+    update-crypto-policies --set DEFAULT:SHA1 && \
     dnf clean all && \
     rm -rf /var/cache/dnf
-
-# システム設定（旧暗号化ポリシーを有効化、Alma10以降は削除されている）
-RUN update-crypto-policies --set DEFAULT:SHA1
 
 # 作業ディレクトリ
 WORKDIR /workspace
@@ -44,15 +43,3 @@ COPY ansible.cfg /etc/ansible/ansible.cfg
 
 # デフォルト起動
 CMD ["/bin/bash"]
-
-# ============================================================
-# Verify
-#    - コマンド: docker build --target verify -t verify .
-# ============================================================
-FROM ansible AS verify
-
-RUN pip3 install --no-cache-dir \
-        pytest \
-        pytest-testinfra
-
-CMD ["pytest"]
