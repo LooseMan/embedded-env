@@ -9,6 +9,10 @@ FILE_NAME  = $(IMAGE_NAME)_$(TARGET)_$(TAG).tar.gz
 
 .PHONY: build save load clean
 
+all:
+	@$(MAKE) build
+	@$(MAKE) save
+
 build:
 	@echo "Building $(IMAGE_NAME):$(TAG) $(if $(TARGET),with target $(TARGET))..."
 	podman build $(if $(TARGET),--target $(TARGET)) -t $(IMAGE_NAME):$(TAG) .
@@ -20,10 +24,6 @@ save:
 load:
 	@echo "Loading $(FILE_NAME)..."
 	podman load -i $(FILE_NAME)
-
-all:
-	@$(MAKE) build
-	@$(MAKE) save
 
 clean:
 	@echo "Cleaning up..."
