@@ -1,0 +1,90 @@
+---
+- name: Prepare AlmaLinux 9 as libvirt VM host
+  hosts: alma9
+  # 本playbookの実行にはroot権限が必要なためbecomeを有効化する。
+  # --ask-become-passオプションにて実行時にパスワードを入力すること。
+  become: true
+  gather_facts: false
+
+  vars:
+    libvirt_user: "{{ ansible_user }}"
+
+    libvirt_packages:
+      - libvirt
+      - virt-manager
+
+    libvirt_sockets:
+      - virtqemud.socket
+      - virtnetworkd.socket
+      - virtstoraged.socket
+
+    virtqemud_settings:
+      - unix_sock_group
+      - unix_sock_rw_perms
+
+  tasks:
+
+    # --------------------------------------------------
+    # 1. libvirt導入
+    # --------------------------------------------------
+    - name: Install libvirt and virt-manager
+      ansible.builtin.dnf:
+        name: "{{ libvirt_packages }}"
+        state: present
+
+    # --------------------------------------------------
+    # 2. libvirtグループへユーザーを追加
+    # --------------------------------------------------
+    - name: Add user to libvirt group
+      ansible.builtin.user:
+        name: "{{ libvirt_user }}"
+        groups: libvirt
+        append: true
+
+    # --------------------------------------------------
+    # 3. virtqemud.conf のソケット設定を有効化（コメント解除）
+    # --------------------------------------------------
+    - name: Uncomment unix socket settings
+      ansible.builtin.replace:
+        path: /etc/libvirt/virtqemud.conf
+        regexp: '^\s*#\s*({{ item }}\s*=.*)'
+        replace: '\1'
+        backup: true
+      loop: "{{ virtqemud_settings }}"
+      register: virtqemud_conf_result
+
+    # 設定変更時のみ virtqemud サービスを再起動
+    - name: Restart virtqemud service if changed
+      ansible.builtin.systemd:
+        name: virtqemud.service
+        state: restarted
+      when: virtqemud_conf_result.changed
+
+    # --------------------------------------------------
+    # 4. libvirt関連socketを起動
+    # --------------------------------------------------
+    - name: Start libvirt daemon sockets
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+      loop: "{{ libvirt_sockets }}"
+
+    # --------------------------------------------------
+    # 5. libvirtホストとして利用可能か確認
+    # --------------------------------------------------
+    - name: Check libvirt connection
+      ansible.builtin.command:
+        cmd: virsh -c qemu:///system capabilities
+      become_user: "{{ libvirt_user }}"
+      changed_when: false
+
+    - name: Check libvirt networks
+      ansible.builtin.command:
+        cmd: virsh -c qemu:///system net-list --all
+      become_user: "{{ libvirt_user }}"
+      register: libvirt_networks
+      changed_when: false
+
+    - name: Show libvirt networks
+      ansible.builtin.debug:
+        var: libvirt_networks.stdout_lines
