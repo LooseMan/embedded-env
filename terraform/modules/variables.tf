@@ -1,9 +1,3 @@
-variable "libvirt_uri" {
-  description = "リモート libvirt への接続 URI（SSH ユーザー、ホスト、秘密鍵パスを含む）"
-  type        = string
-  sensitive   = true
-}
-
 variable "vm_name" {
   description = "作成する仮想マシン名"
   type        = string
