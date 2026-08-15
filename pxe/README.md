@@ -45,7 +45,7 @@ Podman が属性変更（`lsetxattr`）で失敗するのを防ぐため、`:Z` 
 
 ---
 
-**3. ハマりやすいポイントと解決策（まとめ）**
+**3. ハマりやすいポイントと解決策**
 
 * **クライアントが BIOS（`Arch:00000`）で起動して反応しない:**
 * VMware 等の VM 設定で **EFI（UEFI）モード** を有効化する。
@@ -62,3 +62,61 @@ Podman が属性変更（`lsetxattr`）で失敗するのを防ぐため、`:Z` 
 * **Podman 起動時に `Read-only file system` エラー（`lsetxattr`）が出る:**
 * ISO の Read-Only マウントに対して `:Z` や `:z` を指定すると発生。マウント指定を `:ro` に変更し、ホストのマウント時に `context="..."` を付与する。
 
+**4. 便利コマンド**
+
+**UDP関連（DHCP / TFTP / DNS 等）**
+
+* `ss -ulnp | grep -E '53|67|69'`
+* UDPで待機（Listen）しているプロセスやポート状態を確認する。
+
+
+* `nc -u -z -v <IPアドレス> <ポート番号>`（例: `nc -u -z -v 127.0.0.1 69`）
+* 指定したUDPポートへのソケット疎通を確認する。
+
+
+* `sudo firewall-cmd --add-port=<ポート番号>/udp --permanent`
+* UDPポートの受信をファイアウォールで常時許可する。
+
+
+
+**TCP関連（HTTP / HTTPS / SSH 等）**
+
+* `ss -tlnp | grep -E '80|8080|8081'`
+* TCPで待機しているプロセスやポート状態を確認する。
+
+
+* `sudo firewall-cmd --add-port=<ポート番号>/tcp --permanent`
+* TCPポートの受信をファイアウォールで常時許可する。
+
+
+
+**IP / ネットワーク層（L3）**
+
+* `ip addr`
+* インターフェースのIPアドレス割り当て状態やリンク状態を確認する。
+
+
+* `sudo sysctl -w net.ipv4.ip_unprivileged_port_start=53`
+* 特権なし（Rootless）プロセスが1024未満のウェルノウンポート（53番〜）をバインドできるようにカーネルパラメータを変更する。
+
+
+
+**ファイアウォール全般**
+
+* `sudo firewall-cmd --list-ports`
+* 開放されているポート（TCP/UDP）の一覧を確認する。
+
+
+* `sudo firewall-cmd --reload`
+* 変更したファイアウォール設定を即座に再読み込みして反映する。
+
+
+
+**コンテナ・システムログ追尾（動作検証時）**
+
+* `podman logs -f <コンテナ名またはID>`
+* コンテナ側のログをリアルタイムで追尾する。
+
+
+* `sudo tail -f /var/log/messages`
+* ホストOS側のシステムログ（カーネルやネットワークイベント等）をリアルタイムで追尾する。
