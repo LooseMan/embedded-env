@@ -1,2 +1,0 @@
-PXEブート（DHCPプロキシやTFTP）を別ホストから正常に利用できるようにするためには、ポートオフセット（8000番台）を諦め、本来のポート番号でバインドするのが唯一の確実な方法です。
-sudo sysctl -w net.ipv4.ip_unprivileged_port_start=53
