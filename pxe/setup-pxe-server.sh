@@ -78,3 +78,6 @@ echo
 echo "=========================================="
 echo " PXE Server started successfully."
 echo "=========================================="
+sudo podman ps
+sudo podman logs -f pxe-http &
+sudo podman logs -f pxe-dhcp &
