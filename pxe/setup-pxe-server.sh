@@ -43,6 +43,12 @@ echo "[4/4] Starting Containers..."
 # ------------------------------------------------------------
 echo "  -> Starting Nginx (pxe-http)..."
 
+for port in 80/tcp 443/tcp; do
+  # firewall-cmd --add-portには冪等性があるため、既存ルールがあってもエラーにならず、何度でも実行可能
+  sudo firewall-cmd --add-port="${port}" --permanent
+done
+sudo firewall-cmd --reload
+
 # -v ...:ro
 # ISOマウント領域は Read-Only のため、Podman による SELinux ラベル変更(:Z/:z)をスキップし、
 # 純粋な読取専用マウント (:ro) として通過させる
@@ -56,6 +62,12 @@ sudo podman run -d \
 # 2. DNS/DHCP/TFTP サーバー (dnsmasq) 起動
 # ------------------------------------------------------------
 echo "  -> Starting DNS/DHCP/TFTP (dnsmasq)..."
+
+for port in 67/udp 69/udp 4011/udp; do
+  # firewall-cmd --add-portには冪等性があるため、既存ルールがあってもエラーにならず、何度でも実行可能
+  sudo firewall-cmd --add-port="${port}" --permanent
+done
+sudo firewall-cmd --reload
 
 # --cap-add=NET_ADMIN / NET_RAW: パケットの横取り・ブロードキャスト応答に必要な権限
 # -v ...:Z : ホスト上の書込可能領域のため、Podmanの排他的SELinuxラベル(:Z)を正常適用可能

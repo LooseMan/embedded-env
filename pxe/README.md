@@ -121,17 +121,7 @@ Podman が属性変更（`lsetxattr`）で失敗するのを防ぐため、`:Z` 
 * `sudo tail -f /var/log/messages`
 * ホストOS側のシステムログ（カーネルやネットワークイベント等）をリアルタイムで追尾する。
 
-
-以下のファイルにpxeサーバのIPアドレス、ネットワークアドレスをベタ書きしている
-pxe/grub.cfg
-pxe/dnsmasq.conf
-
-TODO：
-現在はファイアウォールでtftp通信がブロックされるため、ファイアウォールを止めている。
-sudo systemctl stop firewalld
-以下のコマンドで必要なポートのみ開いて対応したい。
-
-sudo firewall-cmd --add-service=tftp --permanent
-sudo firewall-cmd --add-service=dhcp --permanent
-sudo firewall-cmd --add-helper=tftp --permanent
-sudo firewall-cmd --reload
+TODO:
+    以下のファイルにpxeサーバのIPアドレス、ネットワークアドレスをベタ書きしている。テンプレートなどを駆使し、一括置換で対応したい。
+    pxe/grub.cfg
+    pxe/dnsmasq.conf
