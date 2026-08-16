@@ -39,7 +39,7 @@ RUN dnf -y install epel-release && \
     rm -rf /var/cache/dnf
 
 # Ansible 設定
-COPY ansible.cfg /etc/ansible/ansible.cfg
+COPY ../ansible.cfg /etc/ansible/ansible.cfg
 
 # デフォルト起動
 CMD ["/bin/bash"]

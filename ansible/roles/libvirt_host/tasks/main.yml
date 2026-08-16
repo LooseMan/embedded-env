@@ -1,0 +1,52 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/libvirt_host
+
+# 1. libvirt導入
+- name: Install libvirt and virt-manager
+  ansible.builtin.dnf:
+    name: "{{ libvirt_packages }}"
+    state: present
+
+# 2. libvirtグループへユーザーを追加
+- name: Add user to libvirt group
+  ansible.builtin.user:
+    name: "{{ libvirt_user }}"
+    groups: libvirt
+    append: true
+
+# 3. virtqemud.conf のソケット設定を有効化（コメント解除）
+- name: Uncomment unix socket settings
+  ansible.builtin.replace:
+    path: /etc/libvirt/virtqemud.conf
+    regexp: '^\s*#\s*({{ item }}\s*=.*)'
+    replace: '\1'
+    backup: true
+  loop: "{{ virtqemud_settings }}"
+  # 設定変更時のみ virtqemud サービスを再起動
+  notify: Restart virtqemud service
+
+# 4. libvirt関連socketを起動
+- name: Start libvirt daemon sockets
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+  loop: "{{ libvirt_sockets }}"
+
+# 5. libvirtホストとして利用可能か確認
+- name: Check libvirt connection
+  ansible.builtin.command:
+    cmd: virsh -c qemu:///system capabilities
+  become_user: "{{ libvirt_user }}"
+  changed_when: false
+
+- name: Check libvirt networks
+  ansible.builtin.command:
+    cmd: virsh -c qemu:///system net-list --all
+  become_user: "{{ libvirt_user }}"
+  register: libvirt_networks
+  changed_when: false
+
+- name: Show libvirt networks
+  ansible.builtin.debug:
+    var: libvirt_networks.stdout_lines

@@ -1,0 +1,8 @@
+---
+- name: Prepare AlmaLinux 9 as libvirt VM host
+  hosts: alma9
+  become: true
+  gather_facts: false
+
+  roles:
+    - role: libvirt_host

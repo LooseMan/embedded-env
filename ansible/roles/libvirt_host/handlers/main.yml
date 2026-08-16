@@ -1,0 +1,8 @@
+#SPDX-License-Identifier: MIT-0
+---
+# handlers file for roles/libvirt_host
+
+- name: Restart virtqemud service
+  ansible.builtin.systemd:
+    name: virtqemud.service
+    state: restarted

@@ -1,0 +1,19 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for roles/libvirt_host
+
+libvirt_user: "{{ ansible_user }}"
+
+libvirt_packages:
+  - libvirt
+  - virt-manager
+
+libvirt_sockets:
+  - virtqemud.socket
+  - virtnetworkd.socket
+  - virtstoraged.socket
+
+virtqemud_settings:
+  - unix_sock_group
+  - unix_sock_rw_perms
+

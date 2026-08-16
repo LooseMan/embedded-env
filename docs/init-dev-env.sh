@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SSH_USER="user"
-SSH_HOST="192.168.17.131"
+SSH_HOST="192.168.17.134"
 SSH_CONFIG="${HOME}/.ssh/config"
 
 GIT_USER="LooseMan"
@@ -32,8 +32,6 @@ Host ${SSH_HOST}
   User ${SSH_USER}
 EOF
 	fi
-
-	remote_command "ip addr show"
 
 	# Install Git on remote host if not already installed
 	remote_command "if ! command -v git &> /dev/null; then sudo dnf install -y git; fi"
