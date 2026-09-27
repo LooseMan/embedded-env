@@ -29,6 +29,7 @@ variable "libvirt_uri" {
 module "my_nested_vm" {
   source = "../modules"
 
+  vm_group  = "old_servers"
   vm_name		= "nested-guest-vm-2"
 
   host_only_network_name    = "host-only-bridge-2"

@@ -13,33 +13,16 @@ terraform {
 
 # プロバイダ設定はルートモジュールで実施すること
 # モジュールでuriを設定するとデプロイ先が固定されてしまう
+# また環境間で共有するリソースはresourceで定義せず、文字列で指定すること
 
 # libvirt の default ネットワークの DHCP リースから、eth0 の IPv4 を取得する。
 data "libvirt_domain_interface_addresses" "nested_guest" {
   domain     = libvirt_domain.nested_guest.name
-  depends_on = [libvirt_domain.nested_guest] 
+  depends_on = [libvirt_domain.nested_guest]
   source = "lease"
 }
 
-# 孫VM用のネットワーク（ホストオンリー）
-resource "libvirt_network" "host_only" {
-  name = var.host_only_network_name
-  # ホストOS起動時に有効化する
-  autostart = true
-
-  dns = {
-    enable = "no"
-  }
-
-  ips = [
-    {
-      address = var.host_only_network_gateway
-      prefix  = 24
-      # DHCP disabled — guest will be configured with a static ifcfg-eth1
-    }
-  ]
-}
-
+# ベースイメージは共有、差分イメージはVM毎に用意
 resource "libvirt_volume" "overlay" {
   name = var.overlay_volume_name
   pool = var.storage_pool_name
@@ -115,18 +98,18 @@ resource "libvirt_domain" "nested_guest" {
           timeout = 300
         }
       },
-      # eth1: ホストオンリー接続用のアダプタ
-      {
-        model = {
-          type = "e1000"
-        }
-        source = {
-          network = {
-            # eth1: host-onlyネットワーク
-            network = libvirt_network.host_only.name
-          }
-        }
-      }
+      # eth1: ホストオンリー接続用のアダプタ（一旦コメントアウト、あとで正式対応）
+      # {
+      #   model = {
+      #     type = "e1000"
+      #   }
+      #   source = {
+      #     network = {
+      #       # eth1: host-onlyネットワーク
+      #       network = libvirt_network.host_only.name
+      #     }
+      #   }
+      # }
     ]
 
     # ディスク設定

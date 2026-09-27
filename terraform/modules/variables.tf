@@ -1,3 +1,8 @@
+variable "vm_group" {
+  description = "作成する仮想マシンのグループ名"
+  type        = string
+}
+
 variable "vm_name" {
   description = "作成する仮想マシン名"
   type        = string
