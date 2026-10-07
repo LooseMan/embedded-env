@@ -9,15 +9,15 @@ FILE_NAME  = $(IMAGE_NAME)-$(TAG).tar.gz
 
 build:
 	@echo "Building $(IMAGE_NAME):$(TAG)..."
-	podman build --platform $(PLATFORM) -f Dockerfile -t $(IMAGE_NAME):$(TAG) ..
+	docker build --pull --platform $(PLATFORM) -f Dockerfile -t $(IMAGE_NAME):$(TAG) .
 
 save:
 	@echo "Saving $(IMAGE_NAME):$(TAG)..."
-	podman save $(IMAGE_NAME):$(TAG) | gzip > $(FILE_NAME)
+	docker save $(IMAGE_NAME):$(TAG) | gzip > $(FILE_NAME)
 
 load:
 	@echo "Loading $(FILE_NAME)..."
-	podman load -i $(FILE_NAME)
+	docker load -i $(FILE_NAME)
 
 all:
 	@$(MAKE) build

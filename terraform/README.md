@@ -6,32 +6,28 @@
 
 ## 固定バージョン
 
-Terraform実行環境の再現性を保つため、Dockerfile冒頭の `ARG` に既定バージョンを集約し、ここにも明記します。Dockerfileを直接編集するか、`docker build --build-arg` で呼び出し元から上書きできます。
+Terraform実行環境のバージョンを固定するため、Dockerfile冒頭に Terraform とベースイメージのバージョンを定義します。OS パッケージは脆弱性修正を取り込めるよう、リポジトリの現在版を使用します。
 
 | コンポーネント | バージョン |
 | --- | --- |
-| ベースイメージ | AlmaLinux 9.7 |
+| ベースイメージ | AlmaLinux 9（最新マイナー版） |
 | Terraform CLI | 1.16.5 |
 | libvirt Provider | 0.9.8 |
-| dnf-plugins-core | 4.3.0 |
-| libvirt-libs | 10.10.0系 |
-| openssh-clients | 8.7p1系 |
+
+OS パッケージ（`dnf-plugins-core`、`libvirt-libs`、`openssh-clients`）は、ベースイメージで指定した AlmaLinux リポジトリから解決します。OS パッケージの RPM バージョンは固定しません。
 
 例:
 
 ```bash
-docker build --platform linux/amd64 \
-  --build-arg ALMALINUX_VERSION=9.7 \
-  --build-arg TERRAFORM_VERSION=1.16.5 \
-  --build-arg DNF_PLUGINS_VERSION=4.3.0 \
-  --build-arg LIBVIRT_VERSION=10.10.0 \
-  --build-arg OPENSSH_VERSION=8.7p1 \
-  -t terraform .
+cd terraform/docker
+make build
 ```
+
+Terraform のバージョンを変更する場合だけ、Dockerfile 冒頭の `TERRAFORM_VERSION` を更新します。OS の脆弱性修正を取り込むため、ビルド時は Makefile の `make build` を使用してください。
 
 libvirt Providerのバージョンは `providers.tf` で管理します。
 
-`libvirt-libs` と `openssh-clients` は、AlmaLinux 9.7の有効なリポジトリから解決します。RPMのrelease番号（例: `el9_7.alma.1`）はミラーの更新状況によって変わるため、Dockerfileでは固定しません。
+`libvirt-libs` と `openssh-clients` は、AlmaLinux 9 の最新マイナー版リポジトリから解決します。RPMのバージョンやrelease番号は固定せず、リポジトリ側の依存関係解決に任せます。
 
 ## ビルド
 
@@ -39,7 +35,7 @@ libvirt Providerのバージョンは `providers.tf` で管理します。
 
 ```bash
 cd terraform/docker
-docker build --platform linux/amd64 -t terraform .
+make build
 ```
 
 x86_64 Linux ホストでは `--platform linux/amd64` を省略できます。Apple Silicon など別アーキテクチャのホストでは、この指定により x86_64 イメージとしてビルド・実行されます。

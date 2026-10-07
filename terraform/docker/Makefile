@@ -13,7 +13,7 @@ all:
 
 build:
 	@echo "Building $(IMAGE_NAME):$(TAG)..."
-	docker build --platform $(PLATFORM) -t $(IMAGE_NAME):$(TAG) .
+	docker build --pull --platform $(PLATFORM) -t $(IMAGE_NAME):$(TAG) .
 
 save:
 	@echo "Saving $(IMAGE_NAME):$(TAG)..."

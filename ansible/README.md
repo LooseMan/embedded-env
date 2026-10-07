@@ -54,7 +54,7 @@ Control Nodeには以下のソフトウェアが必要です。
 
 | パッケージ | 用途 |
 |------------|------|
-| ansible | Playbook実行 |
+| ansible 7.7.0 | Playbook実行 |
 | python3-pywinrm | Windows (WinRM) 管理 |
 | openssh-clients | Linux (SSH) 管理 |
 | crypto-policies-scripts | CentOS 5とのSSH互換性確保 |
@@ -70,6 +70,8 @@ CentOS 5との互換性のため、システム暗号ポリシーを以下へ変
 ```bash
 update-crypto-policies --set DEFAULT:SHA1
 ```
+
+Ansible のバージョンは実行環境として固定します。その他の OS パッケージは個別の RPM バージョンを固定せず、`epel-release` が設定する EPEL リポジトリと AlmaLinux のリポジトリ側で解決します。OS パッケージの脆弱性修正を取り込むため、定期的にイメージを再ビルドしてください。
 
 ---
 
@@ -165,7 +167,8 @@ Dockerを利用する場合は、リポジトリに同梱されている `Docker
 ## Dockerイメージ作成
 
 ```bash
-docker build -t ansible-control-node .
+cd ansible/docker
+make build
 ```
 
 ## コンテナ起動
