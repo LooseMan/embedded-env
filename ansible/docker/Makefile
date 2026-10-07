@@ -1,17 +1,15 @@
 IMAGE_NAME = ansible
 TAG        = latest
-
-# デフォルトのターゲット名（空にしておけば指定なしで全体ビルド）
-TARGET     = ansible
+PLATFORM   = linux/amd64
 
 # 圧縮率を上げるために gzip で圧縮する
-FILE_NAME  = $(IMAGE_NAME)_$(TARGET)_$(TAG).tar.gz
+FILE_NAME  = $(IMAGE_NAME)-$(TAG).tar.gz
 
 .PHONY: build save load clean
 
 build:
-	@echo "Building $(IMAGE_NAME):$(TAG) $(if $(TARGET),with target $(TARGET))..."
-	podman build $(if $(TARGET),--target $(TARGET)) -t $(IMAGE_NAME):$(TAG) .
+	@echo "Building $(IMAGE_NAME):$(TAG)..."
+	podman build --platform $(PLATFORM) -f Dockerfile -t $(IMAGE_NAME):$(TAG) ..
 
 save:
 	@echo "Saving $(IMAGE_NAME):$(TAG)..."
