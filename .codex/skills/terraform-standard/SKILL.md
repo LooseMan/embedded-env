@@ -8,6 +8,7 @@ Terraformコード生成時、ユーザーの設計思想（ルートはシン�
 
 # 1. 必須環境・バージョン定義
 - **Libvirt Provider Version**: `0.9.8`
+- **Terraform実行環境**: Dockerfile冒頭の`ARG`でAlmaLinux `9.7`、Terraform `1.16.5`、`dnf-plugins-core` `4.3.0`、`libvirt-libs` `10.10.0`系、`openssh-clients` `8.7p1`系を既定値として管理し、Terraform READMEにもバージョン一覧を明記する。AlmaLinux RPMのrelease番号はミラー依存のため固定しない。
 - **構文規則**: `required_providers` ブロックを必須とし、0.8系の古いパラメータは一切排除する。
 
 # 2. ディレクトリ構成・ファイル分割ルール
