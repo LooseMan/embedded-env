@@ -50,6 +50,44 @@ terraform plan
 terraform apply
 ```
 
+## Docker経由での実行（macOS + VMware Fusion）
+
+Docker DesktopのコンテナからVMware FusionのVMへ接続する場合は、VMware FusionのNATポートフォワーディングを使用します。
+
+1. VMware FusionでVMのネットワークをNATにする。
+2. Fusionのネットワーク設定で、TCPポートを転送する。
+
+   ```text
+   Mac側ポート: 2222
+   VM側IP:      <VMのNAT側IP>
+   VM側ポート:  22
+   ```
+
+3. MacからSSH接続を確認する。
+
+   ```bash
+   ssh -p 2222 user@127.0.0.1
+   ```
+
+4. `terraform.tfvars` の接続URIを、Macのポートフォワーディング先にする。
+
+   ```hcl
+   libvirt_uri = "qemu+ssh://user@host.docker.internal:2222/system?socket=/run/libvirt/virtqemud-sock"
+   ```
+
+   `qemu+ssh` のURIにはSSHパスワードを記載しません。秘密鍵は `container-run.sh` によりホストの `~/.ssh` からコンテナへマウントされます。
+
+5. プロジェクトディレクトリから、Terraformコンテナを起動する。
+
+   ```bash
+   cd terraform/simple-libvirt-vm
+   ../container-run.sh terraform init
+   ../container-run.sh terraform plan
+   ../container-run.sh terraform apply
+   ```
+
+`container-run.sh` はTerraformディレクトリを `/workspace` にマウントし、現在のプロジェクトディレクトリをコンテナ内の作業ディレクトリに設定します。`terraform init` で作成される `.terraform` と状態ファイルはホスト側に保存されます。
+
 適用後、DHCP リースからゲストの IP を確認し、その IP への疎通を確認します。
 
 ```bash
