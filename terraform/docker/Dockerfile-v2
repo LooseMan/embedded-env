@@ -1,0 +1,47 @@
+# Terraformのバージョンを更新する場合は、ここだけ変更する。
+ARG TERRAFORM_VERSION=1.16.5
+
+# ===============================================================================
+# 1. ビルドステージ: Provider mirrorを生成
+# ===============================================================================
+FROM hashicorp/terraform:${TERRAFORM_VERSION} AS terraform-build
+
+WORKDIR /tmp/provider
+
+# プロバイダーの取得元と要求バージョンを定義した構成を配置する。
+COPY providers.tf ./
+
+# ビルド時だけRegistryへ接続し、実行時に使用するfilesystem mirrorを生成する。
+# この処理ではプラグインキャッシュを使用しない。
+RUN mkdir -p /opt/terraform/providers && \
+    terraform providers mirror /opt/terraform/providers
+
+# ===============================================================================
+# 2. 実行ステージ: Terraformの実行環境
+# ===============================================================================
+FROM hashicorp/terraform:${TERRAFORM_VERSION}
+
+# HashiCorp公式イメージはAlpineベースのため、実行に必要なパッケージをapkで導入する。
+# libvirt-libs: libvirt Providerの共有ライブラリ
+# openssh-client: qemu+sshによるリモートlibvirt接続
+RUN apk add --no-cache \
+        libvirt-libs \
+        openssh-client
+
+# ビルドステージで生成したmirrorを実行イメージへ引き継ぐ。
+COPY --from=terraform-build /opt/terraform/providers /opt/terraform/providers
+
+# 全ユーザーが利用する共有キャッシュ。Terraformはこのディレクトリを自動作成しない。
+# 共有利用のため書き込み可能にする。並列terraform initは同時実行しないこと。
+RUN mkdir -p /opt/terraform/plugin-cache && \
+    chmod 1777 /opt/terraform/plugin-cache
+
+# ドットで始まらないファイル名を使い、環境変数でCLI設定を明示する。
+COPY terraform-v2.rc /etc/terraform/terraform.rc
+ENV TF_CLI_CONFIG_FILE=/etc/terraform/terraform.rc
+
+WORKDIR /workspace
+
+# 公式イメージのENTRYPOINT(terraform)を解除し、シェルをデフォルトにする。
+ENTRYPOINT []
+CMD ["/bin/sh"]

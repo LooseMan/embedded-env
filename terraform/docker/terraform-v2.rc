@@ -1,0 +1,13 @@
+# 実行時はビルド済みのfilesystem mirrorだけを使用する。
+# directを指定しないため、Terraform Registryへ接続しない。
+disable_checkpoint = true
+
+provider_installation {
+  filesystem_mirror {
+    path = "/opt/terraform/providers"
+  }
+}
+
+# プロジェクト間でプロバイダーを共有するキャッシュ。
+# filesystem mirrorとは別のディレクトリにする必要がある。
+plugin_cache_dir = "/opt/terraform/plugin-cache"
