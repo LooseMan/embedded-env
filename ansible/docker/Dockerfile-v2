@@ -1,0 +1,37 @@
+# ===============================================================================
+# Ansible実行環境: AlmaLinux 9 minimal + AppStreamのansible-core
+# ===============================================================================
+FROM almalinux:9-minimal
+
+# ansible-coreはAlmaLinux 9 AppStreamから導入する。
+# それ以外は、シェル、SSH、WinRM、rsyncに必要な実行時パッケージだけに絞る。
+RUN microdnf install -y --nodocs --setopt=install_weak_deps=0 \
+        ansible-core \
+        bash \
+        crypto-policies-scripts \
+        openssh-clients \
+        python3-pip \
+        rsync && \
+    microdnf clean all
+
+# CentOS 5などのレガシーな管理対象へSSH接続するため、SHA-1を有効化する。
+RUN update-crypto-policies --set DEFAULT:SHA1
+
+# pywinrmはAlmaLinux 9の標準リポジトリにないため、EPELを使わずPyPIから導入する。
+RUN python3 -m pip install --no-cache-dir --disable-pip-version-check \
+        pywinrm==0.4.3
+
+# Ansible 7.7.0に含まれていた2つのコレクションだけを、共有パスへ導入する。
+# バージョンを固定し、ビルド時にGalaxyへ接続する。依存コレクションは追加しない。
+RUN ansible-galaxy collection install \
+        --no-deps \
+        --collections-path /usr/share/ansible/collections \
+        community.libvirt:1.2.0 \
+        ansible.windows:1.14.0
+
+# AnsibleのCLI設定をイメージ内の固定パスへ配置する。
+COPY ansible.cfg /etc/ansible/ansible.cfg
+ENV ANSIBLE_CONFIG=/etc/ansible/ansible.cfg
+
+WORKDIR /workspace
+CMD ["/bin/bash"]
