@@ -1,4 +1,6 @@
 *
 !Dockerfile
+!Dockerfile-v2
 !.terraformrc
+!terraform-v2.rc
 !providers.tf
